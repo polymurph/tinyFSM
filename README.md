@@ -68,6 +68,7 @@ void state_example(void)
 
 TODO: add nee feature to save ending action for the fsm
 TODO: add mutex for thread safety
+TODO: add check for init
 
 Initial Author Edwin Koch
 This work is licensed under MIT. See the LICENSE file in the project root for more information.
