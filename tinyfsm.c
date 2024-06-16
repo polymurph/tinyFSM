@@ -57,7 +57,7 @@ fsmStatus_t fsmRun(
             // invalid state return
             return FSM_FAULT_UNKNOWN_STATE_RETURN;
     }
-    return FSM_RUNING;
+    return FSM_RUNNING;
 }
 
 void fsmTransitionState(
