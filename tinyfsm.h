@@ -1,3 +1,4 @@
+#ifndef _TINYFSM_H_
 #define _TINYFSM_H_
 
 /**
