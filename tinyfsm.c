@@ -44,7 +44,7 @@ fsmStatus_t fsmRun(
             fsmObject->currentState = fsmObject->nextState;
             fsmObject->action();
             fsmObject->state = STATE_NO_CHANGE;
-            return FSM_RUNING;
+            return FSM_RUNNING;
 
         case STATE_END_FSM:
             fsmObject->previousState = fsmObject->entryState;
