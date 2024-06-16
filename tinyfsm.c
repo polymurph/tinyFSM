@@ -9,7 +9,7 @@
  * See the LICENSE file in the project root for more information.
  */
 
-#include "fsm.h"
+#include "tinyfsm.h"
 
 void fsmInit(
     fsm_t* fsmObject,
