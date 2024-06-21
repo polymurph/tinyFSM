@@ -12,20 +12,26 @@
  * See the LICENSE file in the project root for more information.
  */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @brief Typedef for FSM action function pointer.
  */
 typedef void (*fsmAction_t)(void);
-
 
 /**
  * @brief Typedef for mutex object.
  */
 typedef void* fsmMutex_t;
 
+/**
+ * @ brief Mutex operations structure definition
+ */
 typedef struct{
-	unsigned int (*lock)(fsmMutex_t);
-	unsigned int (*unlock)(fsmMutex_t);
+	unsigned int (*lock)(fsmMutex_t);		/**< mutex lock function pointer */
+	unsigned int (*unlock)(fsmMutex_t);		/**< mutex unlock function pointer */
 }fsmMutexOps_t;
 
 /**
@@ -136,5 +142,9 @@ void fsmEndFSM(
  * @brief No action function for the FSM.
  */
 void fsmNoAction();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // _TINYFSM_H_
