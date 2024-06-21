@@ -1,6 +1,6 @@
 # tinyFSM
 
-lightweight finite state machine (FSM) framework written in C.
+lightweight threadsafe finite state machine (FSM) framework written in C.
 
 This framework allows fast and easy implementation and has no dependencies to any libraryes.
 
