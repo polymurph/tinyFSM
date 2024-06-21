@@ -23,6 +23,7 @@ typedef void (*fsmAction_t)(void);
 typedef enum {
     FSM_RUNNING,                     /**< FSM is running */
     FSM_ENDED,                       /**< FSM has ended */
+	FSM_NOT_INITIALIZED,			 /**< FSM is ot initialized */
     FSM_FAULT_UNKNOWN_STATE_RETURN   /**< FSM encountered an unknown state return */
 } fsmStatus_t;
 
@@ -53,6 +54,7 @@ typedef struct {
     fsmStateRoutine_t nextState;     /**< Next state routine */
     fsmStateSemaphore_t state;       /**< Current state semaphore */
     fsmAction_t action;              /**< Current action */
+    unsigned int initialized;		 /**< Flag to indicate if the FSM is initialized. 0 = false and 1 = true */
 } fsm_t;
 
 /**

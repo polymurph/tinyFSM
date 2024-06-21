@@ -25,11 +25,14 @@ void fsmInit(
     fsmObject->fsmEndingAction = fsmEndingAction;
     fsmObject->action = entryAction;
     fsmObject->state = STATE_START;
+    fsmObject->initialized = 1;
 }
 
 fsmStatus_t fsmRun(
     fsm_t* fsmObject)
 {
+	if(fsmObject->initialized != 1) return FSM_NOT_INITIALIZED;
+
     switch(fsmObject->state){
         case STATE_START:
             fsmObject->entryAction();
@@ -68,6 +71,8 @@ void fsmTransitionState(
     fsmStateRoutine_t nextState,
     fsmAction_t action)
 {
+	if(fsmObject->initialized != 1) return;
+
     fsmObject->state = STATE_TRANSITION;
     fsmObject->action = action;
     fsmObject->nextState = nextState;
@@ -76,6 +81,7 @@ void fsmTransitionState(
 void fsmEndFSM(
     fsm_t* fsmObject)
 {
+	if(fsmObject->initialized != 1) return;
     fsmObject->state = STATE_END_FSM;
 }
 
