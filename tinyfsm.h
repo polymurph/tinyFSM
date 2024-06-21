@@ -47,6 +47,7 @@ typedef void (*fsmStateRoutine_t)(void);
 typedef struct {
     fsmStateRoutine_t entryState;    /**< Entry state routine */
     fsmAction_t entryAction;         /**< Entry action */
+    fsmAction_t fsmEndingAction;	 /**< FSM ending action */
     fsmStateRoutine_t previousState; /**< Previous state routine */
     fsmStateRoutine_t currentState;  /**< Current state routine */
     fsmStateRoutine_t nextState;     /**< Next state routine */
@@ -60,11 +61,13 @@ typedef struct {
  * @param fsmObject Pointer to the FSM object.
  * @param entryState Pointer to the entry state routine.
  * @param entryAction Pointer to the entry action function.
+ * @param fsmEndingAction Pointer to the FSM endign action to be executed upon ending the FSM.
  */
 void fsmInit(
     fsm_t* fsmObject,
     fsmStateRoutine_t entryState,
-    fsmAction_t entryAction);
+    fsmAction_t entryAction,
+	fsmAction_t fsmEndingAction);
 
 /**
  * @brief Run the FSM.
@@ -91,11 +94,9 @@ void fsmTransitionState(
  * @brief End the FSM.
  * 
  * @param fsmObject Pointer to the FSM object.
- * @param fsmEndingAction Pointer to the action function to be executed upon ending the FSM.
  */
 void fsmEndFSM(
-    fsm_t* fsmObject,
-    fsmAction_t fsmEndingAction);
+    fsm_t* fsmObject);
 
 /**
  * @brief No action function for the FSM.

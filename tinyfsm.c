@@ -14,13 +14,15 @@
 void fsmInit(
     fsm_t* fsmObject,
     fsmStateRoutine_t entryState,
-    fsmAction_t entryAction)
+    fsmAction_t entryAction,
+	fsmAction_t fsmEndingAction)
 {
     fsmObject->entryState = entryState;
     fsmObject->previousState = entryState;
     fsmObject->currentState = entryState;
     fsmObject->nextState = entryState;
     fsmObject->entryAction = entryAction;
+    fsmObject->fsmEndingAction = fsmEndingAction;
     fsmObject->action = entryAction;
     fsmObject->state = STATE_START;
 }
@@ -47,10 +49,11 @@ fsmStatus_t fsmRun(
             return FSM_RUNNING;
 
         case STATE_END_FSM:
+        	// end the finite state machine
             fsmObject->previousState = fsmObject->entryState;
             fsmObject->currentState = fsmObject->entryState;
             fsmObject->nextState = fsmObject->entryState;
-            fsmObject->action();
+            fsmObject->fsmEndingAction();
             fsmObject->state = STATE_NO_CHANGE;
             return FSM_ENDED;
         default:
@@ -71,10 +74,8 @@ void fsmTransitionState(
 }
 
 void fsmEndFSM(
-    fsm_t* fsmObject,
-    fsmAction_t fsmEndingAction)
+    fsm_t* fsmObject)
 {
-    fsmObject->action = fsmEndingAction;
     fsmObject->state = STATE_END_FSM;
 }
 
