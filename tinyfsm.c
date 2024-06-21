@@ -2,7 +2,7 @@
  * @file tinyfsm.c
  * @brief Tiny Finite State Machine (FSM) framework.
  * 
- * @author Edwin Koch
+ * @authored by Edwin Koch
  * @date 10. June 2024
  * 
  * @license MIT License
@@ -11,11 +11,23 @@
 
 #include "tinyfsm.h"
 
+// No-op lock function for single-threaded use
+static unsigned int _singleThreadedLock(fsmMutex_t mutexObject) {
+    return 0;  // Success
+}
+
+// No-op unlock function for single-threaded use
+static unsigned int _singleThreadedUnlock(fsmMutex_t mutexObject) {
+    return 0;  // Success
+}
+
 void fsmInit(
     fsm_t* fsmObject,
     fsmStateRoutine_t entryState,
     fsmAction_t entryAction,
-	fsmAction_t fsmEndingAction)
+    fsmAction_t fsmEndingAction,
+    fsmMutex_t mutexObject,
+    fsmMutexOps_t mutexOps)
 {
     fsmObject->entryState = entryState;
     fsmObject->previousState = entryState;
@@ -25,44 +37,81 @@ void fsmInit(
     fsmObject->fsmEndingAction = fsmEndingAction;
     fsmObject->action = entryAction;
     fsmObject->state = STATE_START;
+    fsmObject->mutexObject = mutexObject;
+    fsmObject->mutexOps = mutexOps;
     fsmObject->initialized = 1;
 }
 
-fsmStatus_t fsmRun(
-    fsm_t* fsmObject)
+void fsmInitSingleThreaded(
+    fsm_t* fsmObject,
+    fsmStateRoutine_t entryState,
+    fsmAction_t entryAction,
+    fsmAction_t fsmEndingAction)
 {
-	if(fsmObject->initialized != 1) return FSM_NOT_INITIALIZED;
+    static fsmMutexOps_t singleThreadedOps = {
+        .lock = _singleThreadedLock,
+        .unlock = _singleThreadedUnlock
+    };
 
-    switch(fsmObject->state){
+    fsmObject->entryState = entryState;
+    fsmObject->previousState = entryState;
+    fsmObject->currentState = entryState;
+    fsmObject->nextState = entryState;
+    fsmObject->entryAction = entryAction;
+    fsmObject->fsmEndingAction = fsmEndingAction;
+    fsmObject->action = entryAction;
+    fsmObject->state = STATE_START;
+    fsmObject->mutexObject = 0;
+    fsmObject->mutexOps = singleThreadedOps;
+    fsmObject->initialized = 1;
+}
+
+fsmStatus_t fsmRun(fsm_t* fsmObject)
+{
+	// cease execution if not initialized
+    if (fsmObject->initialized != 1) return FSM_NOT_INITIALIZED;
+
+    // mutex lock
+    if (fsmObject->mutexOps.lock(fsmObject->mutexObject) != 0) return FSM_MUTEX_LOCKED;
+
+    switch (fsmObject->state) {
         case STATE_START:
             fsmObject->entryAction();
             fsmObject->state = STATE_NO_CHANGE;
-            return FSM_RUNNING;
+            break;
 
         case STATE_NO_CHANGE:
             fsmObject->currentState();
-            return FSM_RUNNING;
+            break;
 
         case STATE_TRANSITION:
-            // change state
+            // Change state
             fsmObject->previousState = fsmObject->currentState;
             fsmObject->currentState = fsmObject->nextState;
             fsmObject->action();
             fsmObject->state = STATE_NO_CHANGE;
-            return FSM_RUNNING;
+            break;
 
         case STATE_END_FSM:
-        	// end the finite state machine
+            // End the finite state machine
             fsmObject->previousState = fsmObject->entryState;
             fsmObject->currentState = fsmObject->entryState;
             fsmObject->nextState = fsmObject->entryState;
             fsmObject->fsmEndingAction();
             fsmObject->state = STATE_NO_CHANGE;
+
+            // mutex unlock
+            fsmObject->mutexOps.unlock(fsmObject->mutexObject);
             return FSM_ENDED;
+
         default:
-            // invalid state return
+            // Invalid state
+            fsmObject->mutexOps.unlock(fsmObject->mutexObject);
             return FSM_FAULT_UNKNOWN_STATE_RETURN;
     }
+
+    // mutex unlock
+    fsmObject->mutexOps.unlock(fsmObject->mutexObject);
     return FSM_RUNNING;
 }
 
@@ -71,21 +120,35 @@ void fsmTransitionState(
     fsmStateRoutine_t nextState,
     fsmAction_t action)
 {
-	if(fsmObject->initialized != 1) return;
+	// cease execution if not initialized
+    if (fsmObject->initialized != 1) return;
+
+    // mutex lock
+    if (fsmObject->mutexOps.lock(fsmObject->mutexObject) != 0) return;
 
     fsmObject->state = STATE_TRANSITION;
     fsmObject->action = action;
     fsmObject->nextState = nextState;
+
+    // mutex unlock
+    fsmObject->mutexOps.unlock(fsmObject->mutexObject);
 }
 
-void fsmEndFSM(
-    fsm_t* fsmObject)
+void fsmEndFSM(fsm_t* fsmObject)
 {
-	if(fsmObject->initialized != 1) return;
+	// cease execution if not initialized
+    if (fsmObject->initialized != 1) return;
+
+    // mutex lock
+    if (fsmObject->mutexOps.lock(fsmObject->mutexObject) != 0) return;
+
     fsmObject->state = STATE_END_FSM;
+
+    // mutex unlock
+    fsmObject->mutexOps.unlock(fsmObject->mutexObject);
 }
 
 void fsmNoAction()
 {
-
+    // No action function
 }

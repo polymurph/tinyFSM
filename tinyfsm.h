@@ -17,6 +17,17 @@
  */
 typedef void (*fsmAction_t)(void);
 
+
+/**
+ * @brief Typedef for mutex object.
+ */
+typedef void* fsmMutex_t;
+
+typedef struct{
+	unsigned int (*lock)(fsmMutex_t);
+	unsigned int (*unlock)(fsmMutex_t);
+}fsmMutexOps_t;
+
 /**
  * @brief FSM status codes.
  */
@@ -24,6 +35,7 @@ typedef enum {
     FSM_RUNNING,                     /**< FSM is running */
     FSM_ENDED,                       /**< FSM has ended */
 	FSM_NOT_INITIALIZED,			 /**< FSM is ot initialized */
+	FSM_MUTEX_LOCKED,				 /**< FSM mutex is locked */
     FSM_FAULT_UNKNOWN_STATE_RETURN   /**< FSM encountered an unknown state return */
 } fsmStatus_t;
 
@@ -54,6 +66,8 @@ typedef struct {
     fsmStateRoutine_t nextState;     /**< Next state routine */
     fsmStateSemaphore_t state;       /**< Current state semaphore */
     fsmAction_t action;              /**< Current action */
+    fsmMutex_t mutexObject;			 /**< Pointer to mutex object */
+    fsmMutexOps_t mutexOps;			 /**< Mutex operations */
     unsigned int initialized;		 /**< Flag to indicate if the FSM is initialized. 0 = false and 1 = true */
 } fsm_t;
 
@@ -64,8 +78,26 @@ typedef struct {
  * @param entryState Pointer to the entry state routine.
  * @param entryAction Pointer to the entry action function.
  * @param fsmEndingAction Pointer to the FSM endign action to be executed upon ending the FSM.
+ * @param mutexObject Mutex Object for thread safety functionality
+ * @param mutexOps Mutex operatrions for thread safety functionality
  */
 void fsmInit(
+    fsm_t* fsmObject,
+    fsmStateRoutine_t entryState,
+    fsmAction_t entryAction,
+	fsmAction_t fsmEndingAction,
+	fsmMutex_t mutexObject,
+	fsmMutexOps_t mutexOps);
+
+/**
+ * @brief Initialize the FSM for single threaded usecase.
+ *
+ * @param fsmObject Pointer to the FSM object.
+ * @param entryState Pointer to the entry state routine.
+ * @param entryAction Pointer to the entry action function.
+ * @param fsmEndingAction Pointer to the FSM endign action to be executed upon ending the FSM.
+ */
+void fsmInitSingleThreaded(
     fsm_t* fsmObject,
     fsmStateRoutine_t entryState,
     fsmAction_t entryAction,
