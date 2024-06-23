@@ -81,7 +81,10 @@ fsmStatus_t fsmRun(fsm_t* fsmObject)
             break;
 
         case STATE_NO_CHANGE:
+        	fsmObject->mutexOps.unlock(fsmObject->mutexObject);
             fsmObject->currentState();
+        	// wait until mutex is unlocked and then lock it
+        	while(fsmObject->mutexOps.lock(fsmObject->mutexObject) != 0);
             break;
 
         case STATE_TRANSITION:
