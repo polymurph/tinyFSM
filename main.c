@@ -4,28 +4,25 @@
 
 typedef struct{
   char pressedCharacter;
+  tfsm_t fsm;
 }fsm_data_t;
 
-tfsm_state_t state_getUserChar(tfsm_t* fsm);
-tfsm_state_t state_outputChar(tfsm_t* fsm);
+void state_getUserChar(tfsm_t* fsm);
+void state_outputChar(tfsm_t* fsm);
 
-
-
-tfsm_state_t state_getUserChar(tfsm_t* fsm)
+void state_getUserChar(tfsm_t* fsm)
 {
   // type cast for use
-  fsm_data_t* data = (fsm_data_t*)(fsm->contextData);
   fflush(stdout); 
   printf("The test is now in state \"state_getUserChar\"\n");
   printf("Type in any character to move to the next state: ");
   
   fflush(stdout);
   scanf(" %c", &data->pressedCharacter);
-
-  return (tfsm_state_t){state_outputChar};
+  tfsm_transitionState(fsm, state_outputChar);  
 }
 
-tfsm_state_t state_outputChar(tfsm_t* fsm)
+void state_outputChar(tfsm_t* fsm)
 {
   char userChoice = 'a';
  
@@ -42,10 +39,11 @@ tfsm_state_t state_outputChar(tfsm_t* fsm)
   if(userChoice == 'x')
   {
     printf("About to terminate the FSN...");
-    return (tfsm_state_t){tfsm_end};
+    tfsm_transitionState(fsm, NULL);
+    return;
   }
 
-  return (tfsm_state_t){state_getUserChar};
+  tfsm_transitionState(fsm, state_getUserChar);
 }
 
 
@@ -53,9 +51,9 @@ int main(){
 
   printf("tiny FSM test");
 
-  tfsm_t fsm;
   fsm_data_t fsm_data;
-  if(!tfsm_init(&fsm, (tfsm_state_t){state_getUserChar}, (void*) &fsm_data)){
+  if(!tfsm_init(fsm_data->fsm, state_getUserChar))
+  {
     printf("Failed to initialize FSM!");
     return 1;
   }

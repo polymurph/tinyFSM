@@ -17,24 +17,27 @@ extern "C" {
 
 #include <stdbool.h>
 #include <stddef.h>
+
+typedef enum{
+  FSM_RUNNING
+} tfsm_returnState_t;
+
+
 // forward declaration
 typedef struct tfsm_t tfsm_t;
-typedef struct tfsm_state_t tfsm_state_t;
 
-struct tfsm_state_t {
-  tfsm_state_t (*callback)(tfsm_t* fsm);
-};
+typedef void (tfsm_stateCallback_t)(tfsm_t* fsm);
 
-struct tfsm_t {
-  tfsm_state_t currentState;
+struct tfsm_t{
+  tfsm_stateCallback_t currentState;
   void* contextData;
 };
 
-bool tfsm_init(tfsm_t* fsm, tfsm_state_t entryState, void* contextData);
+bool tfsm_init(tfsm_t* fsm, tfsm_stateCallback_t entryState, void* contextData);
 
 bool tfsm_routine(tfsm_t* fsm);
 
-tfsm_state_t tfsm_end(tfsm_t* fsm);
+void tfsm_transitionState(tfsm_t* fsm, tfsm_stateCallback_t nextState);
 
 #ifdef __cplusplus
 }
