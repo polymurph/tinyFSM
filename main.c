@@ -61,7 +61,7 @@ bool dummyApp_init(dummyApp_t* dummyApp)
     // initialize dummyApp state
     dummyApp->state = STATE_GET_USER_CHAR;
     // initialize dummyApp FSM
-    return tfsm_init(&dummyApp->fsm,state_getUserChar, (void*){dummyApp});
+    return tfsm_init(&dummyApp->fsm,state_getUserChar, dummyApp);
 }
 
 bool dummyApp_routine(dummyApp_t* dummyApp)
