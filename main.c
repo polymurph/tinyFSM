@@ -61,7 +61,10 @@ bool dummyApp_init(dummyApp_t* dummyApp)
     // initialize dummyApp state
     dummyApp->state = STATE_GET_USER_CHAR;
     // initialize dummyApp FSM
-    return tfsm_init(&dummyApp->fsm,state_getUserChar, dummyApp);
+    if(FSM_INIT_SUCCESSFUL == tfsm_init(&dummyApp->fsm,state_getUserChar, dummyApp, NULL, NULL)){
+        return true;
+    }
+    return false;
 }
 
 bool dummyApp_routine(dummyApp_t* dummyApp)
@@ -71,12 +74,12 @@ bool dummyApp_routine(dummyApp_t* dummyApp)
 
 int main(){
 
-  printf("dummyApp test of tiny FSM");
+  printf("dummyApp test of tiny FSM\n");
 
   dummyApp_t dummyApp;
   if(!dummyApp_init(&dummyApp))
   {
-    printf("Failed to initialize dummyApp");
+    printf("Failed to initialize dummyApp\n");
     return 1;
   }
 

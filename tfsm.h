@@ -19,7 +19,11 @@ extern "C" {
 #include <stddef.h>
 
 typedef enum{
-  FSM_RUNNING
+    FSM_RUNNING = 1,
+    FSM_EXITED = 0,
+    FSM_ERROR = -1,
+    FSM_INIT_SUCCESSFUL = 2,
+    FSM_INIT_FAIL = -2
 } tfsm_returnState_t;
 
 
@@ -28,14 +32,24 @@ typedef struct tfsm_t tfsm_t;
 
 typedef void (*tfsm_stateCallback_t)(tfsm_t* fsm);
 
+typedef void (*tfsm_mutexLockCallback_t)(void);
+
 struct tfsm_t{
-  tfsm_stateCallback_t currentState;
-  void* contextData;
+    tfsm_stateCallback_t currentState;
+    void* contextData;
+    tfsm_mutexLockCallback_t lock;
+    tfsm_mutexLockCallback_t unlock;
 };
 
-bool tfsm_init(tfsm_t* fsm, tfsm_stateCallback_t entryState, void* contextData);
+tfsm_returnState_t tfsm_init(
+    tfsm_t* fsm,
+    tfsm_stateCallback_t entryState,
+    void* contextData,
+    tfsm_mutexLockCallback_t lock,
+    tfsm_mutexLockCallback_t unlock
+);
 
-bool tfsm_routine(tfsm_t* fsm);
+tfsm_returnState_t tfsm_routine(tfsm_t* fsm);
 
 void tfsm_transitionState(tfsm_t* fsm, tfsm_stateCallback_t nextState);
 
