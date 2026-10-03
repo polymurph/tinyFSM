@@ -2,66 +2,87 @@
 #include <stdbool.h>
 #include "tfsm.h"
 
+typedef enum{
+    STATE_GET_USER_CHAR,
+    STATE_OUTPUT_CHAR,
+    STATE_TERMINATED
+} dummyApp_state_t;
+
 typedef struct{
-  char pressedCharacter;
-  tfsm_t fsm;
-}fsm_data_t;
+    char pressedCharacter;
+    tfsm_t fsm;
+    dummyApp_state_t state;
+}dummyApp_t;
 
 void state_getUserChar(tfsm_t* fsm);
 void state_outputChar(tfsm_t* fsm);
 
 void state_getUserChar(tfsm_t* fsm)
 {
-    fsm_data_t* data = (fsm_data_t*)(fsm->contextData);
+    dummyApp_t* dummyApp = (dummyApp_t*)(fsm->contextData);
     // type cast for use
     fflush(stdout); 
     printf("The test is now in state \"state_getUserChar\"\n");
     printf("Type in any character to move to the next state: ");
 
     fflush(stdout);
-    scanf(" %c", &data->pressedCharacter);
+    scanf(" %c", &dummyApp->pressedCharacter);
+    dummyApp->state = STATE_OUTPUT_CHAR;
     tfsm_transitionState(fsm, state_outputChar);  
 }
 
 void state_outputChar(tfsm_t* fsm)
 {
-  char userChoice = 'a';
+    char userChoice = 'a';
 
-  fsm_data_t* data = (fsm_data_t*)(fsm->contextData); 
+    dummyApp_t* dummyApp = (dummyApp_t*)(fsm->contextData); 
 
-  printf("The test is now in state \"state_outputChar\"\n");
-  printf("You pressed the character %c!\n", data->pressedCharacter);
+    printf("The test is now in state \"state_outputChar\"\n");
+    printf("You pressed the character %c!\n", dummyApp->pressedCharacter);
 
-  printf("To stop press [x] and to go on any other key!\n");
+    printf("To stop press [x] and to go on any other key!\n");
 
-  fflush(stdout);
-  scanf(" %c", &userChoice);
+    fflush(stdout);
+    scanf(" %c", &userChoice);
 
-  if(userChoice == 'x')
-  {
-    printf("About to terminate the FSN...");
-    tfsm_transitionState(fsm, NULL);
-    return;
-  }
-
-  tfsm_transitionState(fsm, state_getUserChar);
+    if(userChoice == 'x')
+    {
+        printf("About to terminate the FSN...");
+        dummyApp->state = STATE_TERMINATED;
+        tfsm_transitionState(fsm, NULL);
+        return;
+    }
+    dummyApp->state = STATE_GET_USER_CHAR;
+    tfsm_transitionState(fsm, state_getUserChar);
 }
 
+bool dummyApp_init(dummyApp_t* dummyApp)
+{
+    // initialize dummyApp state
+    dummyApp->state = STATE_GET_USER_CHAR;
+    // initialize dummyApp FSM
+    return tfsm_init(&dummyApp->fsm,state_getUserChar, (void*){dummyApp});
+}
+
+bool dummyApp_routine(dummyApp_t* dummyApp)
+{
+    return tfsm_routine(&dummyApp->fsm);
+}
 
 int main(){
 
-  printf("tiny FSM test");
+  printf("dummyApp test of tiny FSM");
 
-  fsm_data_t fsm_data;
-  if(!tfsm_init(&fsm_data.fsm, state_getUserChar, (void*){&fsm_data}))
+  dummyApp_t dummyApp;
+  if(!dummyApp_init(&dummyApp))
   {
-    printf("Failed to initialize FSM!");
+    printf("Failed to initialize dummyApp");
     return 1;
   }
 
-  while(tfsm_routine(&fsm_data.fsm));
+  while(dummyApp_routine(&dummyApp));
 
-  printf("Terminated FSM!");
+  printf("Terminated dummyApp!");
 
   return 0;
 }
