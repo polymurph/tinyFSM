@@ -26,7 +26,7 @@ typedef enum{
 // forward declaration
 typedef struct tfsm_t tfsm_t;
 
-typedef void (tfsm_stateCallback_t)(tfsm_t* fsm);
+typedef void (*tfsm_stateCallback_t)(tfsm_t* fsm);
 
 struct tfsm_t{
   tfsm_stateCallback_t currentState;
