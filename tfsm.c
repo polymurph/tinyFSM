@@ -7,7 +7,7 @@ tfsm_returnState_t tfsm_init(tfsm_t* fsm, tfsm_stateCallback_t entryState, void*
 {
     if(fsm == NULL) return FSM_INIT_FAIL;
 
-    if(lock != NULL || && != NULL){
+    if(lock != NULL && unlock != NULL){
         fsm->lock = lock;
         fsm->unlock = unlock;
     } else {
@@ -46,12 +46,12 @@ void tfsm_transitionState(tfsm_t* fsm, tfsm_stateCallback_t nextStateCallback)
 
 static inline void _lock(tfsm_t* fsm)
 {
-    if(fsm->lock != NULL)fsm->lock();
+    if(fsm->lock != NULL) fsm->lock();
 }
 
 static inline void _unlock(tfsm_t* fsm)
 {
 
-    if(fsm->unlock != NULL)fsm->unlock();
+    if(fsm->unlock != NULL) fsm->unlock();
 }
 

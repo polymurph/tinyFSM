@@ -35,7 +35,7 @@ typedef void (*tfsm_stateCallback_t)(tfsm_t* fsm);
 typedef void (*tfsm_mutexLockCallback_t)(void);
 
 struct tfsm_t{
-    tfsm_stateCallback_t currentState;
+    tfsm_stateCallback_t volatile currentState;
     void* contextData;
     tfsm_mutexLockCallback_t lock;
     tfsm_mutexLockCallback_t unlock;
