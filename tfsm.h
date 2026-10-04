@@ -32,7 +32,7 @@ typedef struct tfsm_t tfsm_t;
 
 typedef void (*tfsm_stateCallback_t)(tfsm_t* fsm);
 
-typedef void (*tfsm_mutexLockCallback_t)(void);
+typedef void (*tfsm_mutexLockCallback_t)(tfsm_t* fsm);
 
 struct tfsm_t{
     tfsm_stateCallback_t volatile currentState;
