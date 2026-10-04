@@ -1,69 +1,81 @@
+# TinyFSM (tfsm)
 
-# tinyFSM
+A minimalist, high-performance, and thread-safe Finite State Machine (FSM) framework written in pure C. It is completely decoupled from any operating system and tailored specifically for embedded microcontrollers, RTOS environments (FreeRTOS, Zephyr), or multi-threaded POSIX applications.
 
-lightweight threadsafe finite state machine (FSM) framework written in C.
+## Key Features
+* **Zero Dependencies:** Compiles with any standard C99 environment.
+* **Deadlock-Free Design:** Works safely with standard/normal (non-recursive) mutexes.
+* **Granular Contexts:** Pass distinct lock bindings and custom `contextData` objects to multiple independent state engines.
 
-This framework allows fast and easy implementation and has no dependencies to any libraryes.
+---
 
-## How to implement tinyFSM
+## The Thread-Safety Architecture (Crucial Note)
+To prevent self-transition deadlocks without relying on complex recursive operating system locks, `tfsm` uses a brief critical section approach:
 
-### Implementation <a name="p_1"></a>
+1. `tfsm_routine` locks your custom mutex context briefly.
+2. It takes a local copy of the `currentState` function pointer.
+3. It immediately drops the lock.
+4. It fires the callback function completely unlocked.
 
-First create a fsm object.
+**Result:** State handler callbacks are entirely free to invoke `tfsm_transitionState()` inline using a normal, standard mutex. The engine will safely pivot to the next state on the following routine tick.
+
+---
+
+## Basic Usage Example (POSIX Threads)
+
 ```c
-  fsm_t fsm;
-```
-It then needs to be initialized.
-```c
-  fsmInit(&fsm, entryState, entryAction);
-```
-Once the fsm is initialized the fsm can be executed in a loop e.g. 
-```c
-  while(fsmRun(&fsm)!=FSM_RUNNING);
-```
-The constant checking if the return of `FSM_RUNNING` is done in order to stop looping if the FSM ended or a fault occured.
+#include <stdio.h>
+#include <pthread.h>
+#include <unistd.h>
+#include "tfsm.h"
 
-### Creating states  <a name="p_2"></a>
+// Custom state machine variables
+typedef struct {
+    pthread_mutex_t mutex;
+    int counter;
+} app_context_t;
 
-The states must be of the form shown here.
-```c
-void state_example(void)
-{
-  // your code here
+// State prototypes
+void State_Idle(tfsm_t* fsm);
+void State_Processing(tfsm_t* fsm);
+
+// Mutex wrapper hooks
+void my_lock(tfsm_t* fsm) {
+    app_context_t* ctx = (app_context_t*)fsm->contextData;
+    pthread_mutex_lock(&ctx->mutex);
+}
+
+void my_unlock(tfsm_t* fsm) {
+    app_context_t* ctx = (app_context_t*)fsm->contextData;
+    pthread_mutex_unlock(&ctx->mutex);
+}
+
+void State_Idle(tfsm_t* fsm) {
+    app_context_t* ctx = (app_context_t*)fsm->contextData;
+    printf("FSM Idle. Counter: %d\n", ctx->counter);
+    
+    if (ctx->counter >= 2) {
+        tfsm_transitionState(fsm, State_Processing); // Safely trigger inline!
+    }
+    ctx->counter++;
+}
+
+void State_Processing(tfsm_t* fsm) {
+    printf("FSM Processing complete. Exiting...\n");
+    tfsm_transitionState(fsm, NULL); // Transitioning to NULL terminates the machine
+}
+
+int main(void) {
+    tfsm_t my_fsm;
+    app_context_t app_ctx = { .mutex = PTHREAD_MUTEX_INITIALIZER, .counter = 0 };
+
+    tfsm_init(&my_fsm, State_Idle, &app_ctx, my_lock, my_unlock);
+
+    while (tfsm_routine(&my_fsm) == FSM_RUNNING) {
+        usleep(100000); // 100ms cycle tick
+    }
+
+    printf("FSM Finished cleanly.\n");
+    return 0;
 }
 ```
-It must have an ```c void``` as argument and return.
-
-> **_NOTE:_**  no infinite loops are allowed inside this function, as this will inhibit the functionality of the FSM.
-
-### Creating actions  <a name="p_3"></a>
-
-The action must be of the form shown here.
-```c
-void action_example(void)
-{
-  // your code here
-}
-```
-It must have an ```c void``` as argument and return.
-
-> **_NOTE:_**  no infinite loops are allowed inside this function, as this will inhibit the functionality of the FSM.
-
-### Transitioning states  <a name="p_4"></a>
-
-The followin example shows how a state can be transitioned.
-
-```c
-void state_example(void)
-{
-  // your code here
-  
-  if(your condition){
-    fsmTransitionState(&fsmObject, next_state, state_transition_action);
-    return;
-  }
-}
-```
-
-Initial Author Edwin Koch
-This work is licensed under MIT. See the LICENSE file in the project root for more information.
